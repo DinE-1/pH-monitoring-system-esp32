@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>pH Scope</title>
+  <style>
+    canvas { border:1px solid black; }
+  </style>
+</head>
+<body>
+<h1>pH Monitor</h1>
+<canvas id="scope" width="800" height="300"></canvas>
+<script>
+const ws = new WebSocket(`ws://${location.host}/ws`);
+const ctx = document.getElementById("scope").getContext("2d");
+let data = [];
+
+ws.onmessage = e => {
+  try {
+    const obj = JSON.parse(e.data);
+    let v = obj.voltage * 4095 / 3.3; // convert back to ADC
+    data.push(v);
+    if (data.length > 400) data.shift();
+    draw();
+  } catch(err) { console.error(e.data, err); }
+};
+
+function draw() {
+  ctx.clearRect(0,0,800,300);
+  ctx.beginPath();
+  data.forEach((v,i)=>{
+    let y = 300 - v / 4095 * 300;
+    ctx.lineTo(i*2, y);
+  });
+  ctx.stroke();
+}
+</script>
+</body>
+</html>
+
